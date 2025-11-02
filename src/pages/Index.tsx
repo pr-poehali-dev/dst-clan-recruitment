@@ -1,11 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
+interface NewsItem {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  created_at: string;
+  published: boolean;
+}
+
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loadingNews, setLoadingNews] = useState(true);
+
+  const API_URL = 'https://functions.poehali.dev/a895bd2c-84f2-4f61-8571-1d9c2ad1c863';
+
+  useEffect(() => {
+    const loadNews = async () => {
+      try {
+        const response = await fetch(API_URL);
+        if (response.ok) {
+          const data = await response.json();
+          setNews(data.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Error loading news:', error);
+      }
+      setLoadingNews(false);
+    };
+    loadNews();
+  }, []);
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
@@ -59,7 +88,7 @@ const Index = () => {
               </div>
             </div>
             <div className="hidden md:flex gap-6">
-              {['Главная', 'О клане', 'Требования', 'Достижения', 'Турниры', 'Участники'].map((item, idx) => (
+              {['Главная', 'Новости', 'О клане', 'Требования', 'Достижения', 'Турниры', 'Участники'].map((item, idx) => (
                 <button
                   key={idx}
                   onClick={() => scrollToSection(item.toLowerCase().replace(' ', '-'))}
@@ -112,6 +141,35 @@ const Index = () => {
               </Button>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="новости" className="py-20 px-4">
+        <div className="container mx-auto">
+          <h3 className="text-4xl font-black text-center mb-12 glow-text">Последние новости</h3>
+          {loadingNews ? (
+            <p className="text-center text-muted-foreground">Загрузка новостей...</p>
+          ) : news.length === 0 ? (
+            <p className="text-center text-muted-foreground">Новостей пока нет</p>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-6">
+              {news.map((item, idx) => (
+                <Card key={item.id} className="bg-card border-primary/20 glow-hover animate-fade-in" style={{ animationDelay: `${idx * 0.1}s` }}>
+                  <CardHeader>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                      <Icon name="Calendar" size={14} />
+                      <span>{new Date(item.created_at).toLocaleDateString('ru-RU')}</span>
+                      <span>•</span>
+                      <Icon name="User" size={14} />
+                      <span>{item.author}</span>
+                    </div>
+                    <CardTitle className="text-xl">{item.title}</CardTitle>
+                    <CardDescription className="line-clamp-3">{item.content}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
